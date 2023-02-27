@@ -13,124 +13,90 @@ typedef int element_t;                                                          
 typedef vector<element_t> array_t;                                              // tipo do array
 typedef tuple<int, int, double> loginfo_t;                                      // armazena informações de desempenho <trocas, comparações, tempo em ms>
 
-void selectionsort(array_t&, loginfo_t&);
-void heapsort(array_t&, loginfo_t&);
-void buildheap(array_t&, loginfo_t&);
-int filho_e(const array_t&, element_t);
-int filho_d(const array_t&, element_t);
-int pai(const array_t&, element_t);
-void heapify(array_t&, element_t, int, loginfo_t&);
-int heap_max(const array_t&, loginfo_t&);
-int extract_max(array_t&, loginfo_t&);
-void heap_insert(array_t&, element_t, loginfo_t&);
+void merge(const array_t&, const array_t&, array_t&, loginfo_t&);
+void two_way_merge(const vector<array_t>, array_t&, loginfo_t&);
+void multi_way_merge(const vector<array_t>, array_t&, loginfo_t&);
+void mergesort(array_t&, loginfo_t&);
 void swap(element_t* n1, element_t* n2);
+void merge_aux(array_t&, int, int, int, loginfo_t&);
+void mergesort_aux(array_t&, int, int, loginfo_t&);
 
 int main(void){
   loginfo_t loginfo;
   int qtd;
-  array_t array1 = {1,2,3,4,5,6,7,8};
+  array_t array1 = {1,2,4,6,7,8,15,22};
+  array_t array2 = {1,2,3,4,5,6,7,8,25,27,35,44};
+  array_t array3, array4;
+  array_t array5 = {10,9,8,7,6,5,4,3,2,1};
 
-  buildheap(array1, loginfo);
+  for(auto e:array1) cout << e << " ";  
+  cout << endl;
+
+  for(auto e:array2) cout << e << " ";  
+  cout << endl;
+
+  merge(array1, array2, array3, loginfo);
   
-  for(auto e:array1)
-     cout << e << " ";  
+  for(auto e:array3) cout << e << " ";  
   cout << endl;
 
-  array_t array2 = {9,8,7,6,5,4,3,1};
-  heapsort(array2, loginfo);
-
-  for(auto e:array2)
-     cout << e << " ";  
+  vector<array_t> arrays = { array1, array2, array3};
+  two_way_merge(arrays, array4, loginfo);
+  for(auto e:array4) cout << e << " ";  
   cout << endl;
+
+  multi_way_merge(arrays, array4, loginfo);
+  for(auto e:array4) cout << e << " ";  
+  cout << endl;
+
+  mergesort(array5, loginfo);
+  for(auto e:array5) cout << e << " ";  
+  cout << endl;
+
+  // TODO: mostrar log de operações
 
   return 0;
 }
 
 // ################################################
-// Algoritmos de ordenação por Seleção
+// Algoritmos de intercalação
 // ################################################
- 
-// Seleção direta 
-void selectionsort(array_t& array, loginfo_t& loginfo){
-   int trocas = 0;
-   int comparacoes = 0;
-   element_t menorchave;
-   int qtd_elementos = array.size()-1;  
-
-   for(auto i=0; i<qtd_elementos;i++){
-      menorchave = i;
-      for(auto j=i; j<qtd_elementos+1; j++){                   
-         comparacoes = comparacoes + 1;
-         if(array[j] < array[menorchave]){ 
-            menorchave = j;
-         }
-      }   
-      if(menorchave != i){
-         swap(array[i], array[menorchave]);
-         trocas = trocas + 1;
-      }
-   }
-   get<0>(loginfo)=trocas;
-   get<1>(loginfo)=comparacoes;
-} 
-
-// Heapsort e funções auxiliares
-void heapsort(array_t& array, loginfo_t& loginfo){
-   int trocas = 0;
-   int comparacoes = 0;
-   int heap_size = array.size();
-   int qtd_elementos = heap_size-1;   
+void merge(const array_t& array1, const array_t& array2, array_t& array_final, loginfo_t& loginfo){
+    int i = 0, j = 0, trocas = 0, comparacoes = 0;
+    int qtd_a1 = array1.size();
+    int qtd_a2 = array2.size();
     
-   buildheap(array, loginfo);
+    bool elementos = true;
+    array_final.clear();    
+    while(i<qtd_a1 && j<qtd_a2){
+       if(array1[i] <= array2[j])
+          array_final.push_back(array1[i++]);          
+       else
+          array_final.push_back(array2[j++]);       
+    }
     
-   for(auto i = qtd_elementos; i>0; i--){
-      trocas++;
-      swap(array[i], array[0]);
-      heap_size--;
-      heapify(array, 0, heap_size, loginfo); 
-   }
-   get<0>(loginfo)=trocas;
-   get<1>(loginfo)=comparacoes;
+    if(j<qtd_a2 && i>=qtd_a1)                                                   // array 1 terminou
+       for(auto e=j;e<qtd_a2;e++)
+          array_final.push_back(array2[e]);
+    
+    if(i<qtd_a1 && j>=qtd_a2)                                                   // array 2 terminou
+       for(auto e=i;e<qtd_a1;e++)
+          array_final.push_back(array1[e]);
+
+    // TODO: atualizar loginfo
 }
 
-// usada no heapsort
-void buildheap(array_t& array, loginfo_t& loginfo){
-   int ultimo_pai = (array.size()/2)-1;
-   for(auto i=ultimo_pai; i>=0; i--)
-      heapify(array, i, array.size(), loginfo);
-}
-  
-int filho_e(const array_t& array, element_t elemento){
-   return elemento*2+1;
-}
- 
-int filho_d(const array_t& array, element_t elemento){
-   return elemento*2+2;
-}
- 
-int pai(const array_t& array, element_t elemento){
-   return (elemento/2);
-}
- 
-// ################################################
-// Implementação dos seus algoritmos:
-   
-// heapify: verifica se o elemento na posição passada é um heap e se não for transforma-o em um
-// parâmetros: array, índice do elemento a heapificar, tamanho do heap, dicionário de logs
-void heapify(array_t& array, element_t elemento, int heap_size, loginfo_t& loginfo){
-    // a implementar
-}
- 
-int heap_max(array_t& heap, loginfo_t& loginfo){
-    // A implementar!    
-    return -1;
+// Recebe uma lista de arrays e intercala-os 2 a 2
+// retorna um array com o resultado da intercalação
+void two_way_merge(const vector<array_t> arrays, array_t& array_final, loginfo_t& loginfo){   
+  // TODO: implementar
 }
 
-int extract_max(array_t& heap, loginfo_t& loginfo){    
-   // A implementar!
-   return -1;
+void mergesort(array_t& array, loginfo_t& loginfo){
+  // TODO: implementar
 }
- 
-void heap_insert(array_t& heap, element_t elemento, loginfo_t& loginfo){
-   // A implementar!
+
+// Recebe uma lista de arrays e intercala-os usando estrutura similar a heap-min
+void multi_way_merge(const vector<array_t> arrays, array_t& array_final, loginfo_t& loginfo){            
+    // TODO: implementar    
 }
